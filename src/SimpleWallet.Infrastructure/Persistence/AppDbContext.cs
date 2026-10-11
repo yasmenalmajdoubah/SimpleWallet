@@ -1,0 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using SimpleWallet.Domain.Entities;
+
+namespace SimpleWallet.Infrastructure.Persistence;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+}

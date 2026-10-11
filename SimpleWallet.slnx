@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SimpleWallet.Api/SimpleWallet.Api.csproj" />
+    <Project Path="src/SimpleWallet.Application/SimpleWallet.Application.csproj" />
+    <Project Path="src/SimpleWallet.Domain/SimpleWallet.Domain.csproj" />
+    <Project Path="src/SimpleWallet.Infrastructure/SimpleWallet.Infrastructure.csproj" />
+  </Folder>
+</Solution>

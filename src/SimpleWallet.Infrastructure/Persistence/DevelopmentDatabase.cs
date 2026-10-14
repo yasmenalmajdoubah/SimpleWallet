@@ -13,7 +13,10 @@ public static class DevelopmentDatabase
     {
         await using var scope = services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
+        if (db.Database.IsSqlite())
+            await db.Database.EnsureCreatedAsync();
+        else
+            await db.Database.MigrateAsync();
         if (!await db.Users.AnyAsync())
         {
             var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();

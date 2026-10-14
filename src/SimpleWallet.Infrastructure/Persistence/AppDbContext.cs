@@ -18,5 +18,12 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        if (Database.IsSqlite())
+        {
+            modelBuilder.Entity<Wallet>().Property(wallet => wallet.RowVersion)
+                .IsRequired(false)
+                .IsConcurrencyToken(false)
+                .ValueGeneratedNever();
+        }
     }
 }

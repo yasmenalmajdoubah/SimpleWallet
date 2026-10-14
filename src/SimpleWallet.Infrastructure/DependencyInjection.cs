@@ -14,7 +14,13 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Wallet")
             ?? throw new InvalidOperationException("Connection string 'Wallet' is missing.");
 
-        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            if (WalletSql.IsSqlite(connectionString))
+                options.UseSqlite(connectionString);
+            else
+                options.UseSqlServer(connectionString);
+        });
         services.Configure<JwtOptions>(options =>
         {
             var section = configuration.GetSection(JwtOptions.SectionName);

@@ -1,5 +1,4 @@
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using SimpleWallet.Application.Abstractions;
 using SimpleWallet.Application.Common;
@@ -43,10 +42,10 @@ public sealed class WalletQueryStore : IWalletQueries
             WHERE w.UserId = @UserId
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using var connection = WalletSql.Open(_connectionString);
         var row = await connection.QuerySingleOrDefaultAsync<HomeRow>(new CommandDefinition(
             sql,
-            new { UserId = userId, Pending = (int)MoneyRequestStatus.Pending },
+            new { UserId = Key(userId), Pending = (int)MoneyRequestStatus.Pending },
             cancellationToken: cancellationToken));
         if (row is null)
             return null;
@@ -75,7 +74,10 @@ public sealed class WalletQueryStore : IWalletQueries
         int pageSize,
         CancellationToken cancellationToken)
     {
-        const string sql = """
+        var paging = WalletSql.IsSqlite(_connectionString)
+            ? "LIMIT @PageSize OFFSET @Offset"
+            : "OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+        var sql = $"""
             SELECT
                 e.Id,
                 e.Type,
@@ -91,7 +93,7 @@ public sealed class WalletQueryStore : IWalletQueries
             LEFT JOIN Users cu ON cu.Id = cw.UserId
             WHERE w.UserId = @UserId
             ORDER BY e.CreatedAt DESC, e.Id DESC
-            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+            {paging};
 
             SELECT COUNT(*)
             FROM LedgerEntries e
@@ -99,10 +101,10 @@ public sealed class WalletQueryStore : IWalletQueries
             WHERE w.UserId = @UserId;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using var connection = WalletSql.Open(_connectionString);
         using var grid = await connection.QueryMultipleAsync(new CommandDefinition(
             sql,
-            new { UserId = userId, Offset = (page - 1) * pageSize, PageSize = pageSize },
+            new { UserId = Key(userId), Offset = (page - 1) * pageSize, PageSize = pageSize },
             cancellationToken: cancellationToken));
 
         var rows = (await grid.ReadAsync<TransactionRow>()).ToList();
@@ -141,10 +143,10 @@ public sealed class WalletQueryStore : IWalletQueries
             ORDER BY CASE WHEN r.Status = @Pending THEN 0 ELSE 1 END, r.CreatedAt DESC
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using var connection = WalletSql.Open(_connectionString);
         var rows = await connection.QueryAsync<RequestRow>(new CommandDefinition(
             sql,
-            new { UserId = userId, Pending = (int)MoneyRequestStatus.Pending },
+            new { UserId = Key(userId), Pending = (int)MoneyRequestStatus.Pending },
             cancellationToken: cancellationToken));
 
         return rows.Select(row =>
@@ -161,6 +163,9 @@ public sealed class WalletQueryStore : IWalletQueries
                 AsUtc(row.CreatedAt));
         }).ToList();
     }
+
+    private object Key(Guid id) =>
+        WalletSql.IsSqlite(_connectionString) ? WalletSql.FormatId(id) : id;
 
     private static string TypeName(int type) => type switch
     {

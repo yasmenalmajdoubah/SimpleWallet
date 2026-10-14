@@ -10,6 +10,9 @@ using SimpleWallet.Infrastructure.Identity;
 using SimpleWallet.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -59,9 +62,16 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
-    await DevelopmentDatabase.MigrateAndSeedAsync(app.Services);
     app.MapOpenApi();
+
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue("SeedDemo", false))
+    await DevelopmentDatabase.MigrateAndSeedAsync(app.Services);
+
+var indexFile = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html");
+if (File.Exists(indexFile))
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
 
 app.UseExceptionHandler(handler =>
@@ -87,4 +97,7 @@ app.UseCors("Angular");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+if (File.Exists(indexFile))
+    app.MapFallbackToFile("index.html");
 app.Run();

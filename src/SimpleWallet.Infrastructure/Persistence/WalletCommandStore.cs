@@ -298,11 +298,10 @@ public sealed class WalletCommandStore : IWalletCommands
 
         await using var command = connection.CreateCommand();
         command.Transaction = transaction.GetDbTransaction();
-        command.CommandText = "SELECT Id FROM MoneyRequests WITH (UPDLOCK, ROWLOCK) WHERE Id = @id";
+        command.CommandText = LockSql("MoneyRequests");
         var parameter = command.CreateParameter();
         parameter.ParameterName = "@id";
-        parameter.Value = requestId;
-        parameter.DbType = DbType.Guid;
+        BindId(parameter, requestId);
         command.Parameters.Add(parameter);
         var locked = await command.ExecuteScalarAsync(cancellationToken);
         if (locked is null || locked is DBNull)
@@ -319,16 +318,34 @@ public sealed class WalletCommandStore : IWalletCommands
 
         await using var command = connection.CreateCommand();
         command.Transaction = transaction.GetDbTransaction();
-        command.CommandText = "SELECT Id FROM Wallets WITH (UPDLOCK, ROWLOCK) WHERE Id = @id";
+        command.CommandText = LockSql("Wallets");
         var parameter = command.CreateParameter();
         parameter.ParameterName = "@id";
-        parameter.Value = walletId;
-        parameter.DbType = DbType.Guid;
+        BindId(parameter, walletId);
         command.Parameters.Add(parameter);
 
         var locked = await command.ExecuteScalarAsync(cancellationToken);
         if (locked is null || locked is DBNull)
             throw new WalletRuleException(404, "المحفظة غير موجودة.");
+    }
+
+    private bool UseSqlite => _db.Database.IsSqlite();
+
+    private string LockSql(string table) => UseSqlite
+        ? $"SELECT Id FROM {table} WHERE Id = @id"
+        : $"SELECT Id FROM {table} WITH (UPDLOCK, ROWLOCK) WHERE Id = @id";
+
+    private void BindId(System.Data.Common.DbParameter parameter, Guid id)
+    {
+        if (UseSqlite)
+        {
+            parameter.Value = WalletSql.FormatId(id);
+            parameter.DbType = DbType.String;
+            return;
+        }
+
+        parameter.Value = id;
+        parameter.DbType = DbType.Guid;
     }
 
     private async Task<BankCard> CardForUserAsync(Guid userId, CancellationToken cancellationToken)

@@ -9,7 +9,7 @@ import { errorMessage, money } from '../core/models';
   template: `
     <section class="panel narrow">
       <h1>تحويل</h1>
-      <p class="muted">المبلغ ينقص من محفظتك ويزيد لمحفظة المستلم في نفس اللحظة.</p>
+      <p class="muted">المبلغ ينقص من رصيد الصرف ويزيد لرصيد صرف المستلم.</p>
       <form [formGroup]="form" (ngSubmit)="submit()">
         <label>
           إيميل المستلم
@@ -27,7 +27,7 @@ import { errorMessage, money } from '../core/models';
           <p class="alert">{{ error() }}</p>
         }
         @if (done()) {
-          <p class="ok">تم التحويل. رصيدك صار {{ money(done()!) }} د.أ</p>
+          <p class="ok">تم التحويل. رصيد الصرف صار {{ money(done()!) }} د.أ</p>
         }
         <button type="submit" [disabled]="busy()">{{ busy() ? 'يتم التحويل...' : 'تحويل' }}</button>
       </form>
@@ -65,7 +65,7 @@ export class TransferPage {
     this.wallets.transfer(toEmail, amount, this.form.controls.note.value).subscribe({
       next: (response) => {
         this.busy.set(false);
-        this.done.set(response.balance);
+        this.done.set(response.spendingBalance);
         this.form.controls.amount.reset(null);
         this.form.controls.note.reset('');
       },

@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
+    public DbSet<BankCard> BankCards => Set<BankCard>();
+    public DbSet<MoneyRequest> MoneyRequests => Set<MoneyRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

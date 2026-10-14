@@ -13,6 +13,9 @@ import { AuthService } from '../core/auth.service';
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">الرئيسية</a>
           <a routerLink="/deposit" routerLinkActive="active">شحن</a>
           <a routerLink="/transfer" routerLinkActive="active">تحويل</a>
+          <a routerLink="/requests" routerLinkActive="active">طلبات</a>
+          <a routerLink="/bills" routerLinkActive="active">فواتير</a>
+          <a routerLink="/card" routerLinkActive="active">البطاقة</a>
           <a routerLink="/transactions" routerLinkActive="active">السجل</a>
         </nav>
         <div class="who">

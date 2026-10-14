@@ -4,18 +4,55 @@ export interface AuthResponse {
   email: string;
 }
 
-export interface WalletBalance {
-  balance: number;
-  currency: string;
+export interface CardInfo {
+  holderName: string;
+  maskedNumber: string;
+  expiry: string;
+  isFrozen: boolean;
 }
 
-export interface MoneyMovement extends WalletBalance {
+export interface WalletHome {
+  spendingBalance: number;
+  savingsBalance: number;
+  currency: string;
+  salaryAmount: number;
+  canCollectSalary: boolean;
+  incomingRequests: number;
+  card: CardInfo | null;
+}
+
+export interface MoneyMovement {
+  spendingBalance: number;
+  savingsBalance: number;
+  currency: string;
   referenceId: string;
+}
+
+export interface SalaryState {
+  salaryAmount: number;
+  canCollectSalary: boolean;
+}
+
+export interface Bill {
+  code: string;
+  name: string;
+}
+
+export interface MoneyRequestItem {
+  id: string;
+  direction: 'incoming' | 'outgoing' | string;
+  status: string;
+  amount: number;
+  note: string | null;
+  counterpartyName: string;
+  counterpartyEmail: string;
+  createdAt: string;
 }
 
 export interface Transaction {
   id: string;
-  type: 'Deposit' | 'TransferIn' | 'TransferOut' | string;
+  type: string;
+  pocket: 'Spending' | 'Savings' | string;
   amount: number;
   balanceAfter: number;
   counterpartyEmail: string | null;
@@ -52,9 +89,45 @@ export function movementLabel(type: string): string {
       return 'تحويل وارد';
     case 'TransferOut':
       return 'تحويل صادر';
+    case 'Salary':
+      return 'راتب';
+    case 'BillPayment':
+      return 'فاتورة';
+    case 'CardPayment':
+      return 'بطاقة';
+    case 'MoveToSavings':
+      return 'نقل للتوفير';
+    case 'MoveToSpending':
+      return 'نقل للصرف';
     default:
       return type;
   }
+}
+
+export function pocketLabel(pocket: string): string {
+  return pocket === 'Savings' ? 'توفير' : 'صرف';
+}
+
+export function requestStatusLabel(status: string): string {
+  switch (status) {
+    case 'Pending':
+      return 'بانتظار';
+    case 'Accepted':
+      return 'مقبولة';
+    case 'Rejected':
+      return 'مرفوضة';
+    case 'Cancelled':
+      return 'ملغاة';
+    default:
+      return status;
+  }
+}
+
+export function isOutgoing(type: string, pocket: string): boolean {
+  if (type === 'TransferOut' || type === 'BillPayment' || type === 'CardPayment') return true;
+  if (type === 'MoveToSavings' && pocket === 'Spending') return true;
+  if (type === 'MoveToSpending' && pocket === 'Savings') return true;
+  return false;
 }
 
 export function errorMessage(error: unknown, fallback: string): string {

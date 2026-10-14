@@ -36,7 +36,8 @@ public sealed class AuthService
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            Balance = 0,
+            SpendingBalance = 0,
+            SavingsBalance = 0,
             Currency = "JOD"
         };
 

@@ -17,6 +17,7 @@ public class LedgerEntryConfiguration : IEntityTypeConfiguration<LedgerEntry>
         builder.Property(x => x.Amount).HasPrecision(18, 2);
         builder.Property(x => x.BalanceAfter).HasPrecision(18, 2);
         builder.Property(x => x.Type).HasConversion<int>();
+        builder.Property(x => x.Pocket).HasConversion<int>();
         builder.Property(x => x.Note).HasMaxLength(300);
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.HasIndex(x => new { x.WalletId, x.CreatedAt });

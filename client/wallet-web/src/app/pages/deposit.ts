@@ -9,7 +9,7 @@ import { errorMessage, money } from '../core/models';
   template: `
     <section class="panel narrow">
       <h1>شحن المحفظة</h1>
-      <p class="muted">الشحن هنا تجريبي، ويزيد الرصيد مباشرة داخل النظام.</p>
+      <p class="muted">الشحن تجريبي، ويزيد رصيد الصرف.</p>
       <form [formGroup]="form" (ngSubmit)="submit()">
         <label>
           المبلغ
@@ -23,7 +23,7 @@ import { errorMessage, money } from '../core/models';
           <p class="alert">{{ error() }}</p>
         }
         @if (done()) {
-          <p class="ok">تم الشحن. الرصيد صار {{ money(done()!) }} د.أ</p>
+          <p class="ok">تم الشحن. رصيد الصرف صار {{ money(done()!) }} د.أ</p>
         }
         <button type="submit" [disabled]="busy()">{{ busy() ? 'يتم الشحن...' : 'شحن' }}</button>
       </form>
@@ -55,7 +55,7 @@ export class DepositPage {
     this.wallets.deposit(amount, this.form.controls.note.value).subscribe({
       next: (response) => {
         this.busy.set(false);
-        this.done.set(response.balance);
+        this.done.set(response.spendingBalance);
         this.form.controls.amount.reset(null);
         this.form.controls.note.reset('');
       },

@@ -8,6 +8,7 @@ public class LedgerEntry
     public Guid WalletId { get; set; }
     public Wallet Wallet { get; set; } = null!;
     public LedgerEntryType Type { get; set; }
+    public Pocket Pocket { get; set; } = Pocket.Spending;
     public decimal Amount { get; set; }
     public decimal BalanceAfter { get; set; }
     public Guid ReferenceId { get; set; }

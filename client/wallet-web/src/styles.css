@@ -44,7 +44,7 @@ button:disabled { opacity: 0.6; cursor: default; }
   margin-bottom: 1.5rem;
 }
 .brand { color: #14352b; font-weight: 800; font-size: 1.35rem; }
-nav { display: flex; gap: 0.4rem; flex: 1; }
+nav { display: flex; gap: 0.4rem; flex: 1; flex-wrap: wrap; }
 nav a { padding: 0.35rem 0.7rem; border-radius: 999px; color: #314038; }
 nav a.active { background: #14352b; color: #fff; }
 .who { display: flex; align-items: center; gap: 0.6rem; }
@@ -54,7 +54,31 @@ nav a.active { background: #14352b; color: #fff; }
   border: 1px solid #e5dccb;
   border-radius: 18px;
 }
-.balance { padding: 1.5rem; margin-bottom: 1rem; }
+.balances, .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.balance { padding: 1.2rem 1.4rem; }
+.home-actions { margin-bottom: 1rem; }
+.panel + .panel, .grid-2 + .panel, .plastic + .panel, .panel + .plastic { margin-top: 1rem; }
+select {
+  border: 1px solid #d9d0c1;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  background: #fff;
+}
+.plastic {
+  display: grid;
+  gap: 1.2rem;
+  margin: 1rem 0;
+  padding: 1.3rem 1.4rem;
+  border-radius: 18px;
+  background: #14352b;
+  color: #f6f3ea;
+  text-decoration: none;
+}
+.plastic strong { font-size: 1.35rem; letter-spacing: 1px; }
+.plastic div { display: flex; justify-content: space-between; }
+.plastic-static { max-width: 460px; }
+.request-actions { display: grid; justify-items: end; gap: 0.35rem; }
 .balance p { color: #5d675f; }
 .balance strong { display: block; font-size: 3rem; line-height: 1.2; margin: 0.2rem 0 1rem; }
 .balance small { font-size: 1.1rem; }
@@ -109,6 +133,7 @@ th { color: #667066; font-weight: 600; }
 @media (max-width: 720px) {
   .top { flex-wrap: wrap; }
   nav { order: 3; width: 100%; }
+  .balances, .grid-2 { grid-template-columns: 1fr; }
   .balance strong { font-size: 2.3rem; }
   table { display: block; overflow-x: auto; }
 }

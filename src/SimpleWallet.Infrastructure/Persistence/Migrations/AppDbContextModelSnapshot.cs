@@ -22,6 +22,44 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("SimpleWallet.Domain.Entities.BankCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ExpiryMonth")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ExpiryYear")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HolderName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<bool>("IsFrozen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Last4")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("nvarchar(4)");
+
+                    b.Property<Guid>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId")
+                        .IsUnique();
+
+                    b.ToTable("BankCards", (string)null);
+                });
+
             modelBuilder.Entity("SimpleWallet.Domain.Entities.LedgerEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -45,6 +83,9 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<int>("Pocket")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("ReferenceId")
                         .HasColumnType("uniqueidentifier");
 
@@ -66,6 +107,46 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SimpleWallet.Domain.Entities.MoneyRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<Guid>("PayerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RequesterUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PayerUserId", "Status");
+
+                    b.HasIndex("RequesterUserId", "Status");
+
+                    b.ToTable("MoneyRequests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_MoneyRequests_Amount_Positive", "[Amount] > 0");
+                        });
+                });
+
             modelBuilder.Entity("SimpleWallet.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -84,27 +165,33 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
 
+                    b.Property<DateTime?>("LastSalaryAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("SalaryAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Salary_NonNegative", "[SalaryAmount] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("SimpleWallet.Domain.Entities.Wallet", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Balance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -117,6 +204,14 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<decimal>("SavingsBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SpendingBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -127,8 +222,21 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Wallets", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Wallets_Balance_NonNegative", "[Balance] >= 0");
+                            t.HasCheckConstraint("CK_Wallets_Savings_NonNegative", "[SavingsBalance] >= 0");
+
+                            t.HasCheckConstraint("CK_Wallets_Spending_NonNegative", "[SpendingBalance] >= 0");
                         });
+                });
+
+            modelBuilder.Entity("SimpleWallet.Domain.Entities.BankCard", b =>
+                {
+                    b.HasOne("SimpleWallet.Domain.Entities.Wallet", "Wallet")
+                        .WithOne("Card")
+                        .HasForeignKey("SimpleWallet.Domain.Entities.BankCard", "WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("SimpleWallet.Domain.Entities.LedgerEntry", b =>
@@ -145,6 +253,21 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("SimpleWallet.Domain.Entities.MoneyRequest", b =>
+                {
+                    b.HasOne("SimpleWallet.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("PayerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SimpleWallet.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequesterUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SimpleWallet.Domain.Entities.Wallet", b =>
@@ -165,6 +288,8 @@ namespace SimpleWallet.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("SimpleWallet.Domain.Entities.Wallet", b =>
                 {
+                    b.Navigation("Card");
+
                     b.Navigation("Entries");
                 });
 #pragma warning restore 612, 618

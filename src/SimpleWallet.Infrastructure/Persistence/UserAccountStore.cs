@@ -24,6 +24,7 @@ public sealed class UserAccountStore : IUserAccountStore
     {
         _db.Users.Add(user);
         _db.Wallets.Add(wallet);
+        _db.BankCards.Add(DemoCard.Create(wallet.Id, user.FullName));
         try
         {
             await _db.SaveChangesAsync(cancellationToken);

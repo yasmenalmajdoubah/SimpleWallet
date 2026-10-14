@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { WalletService } from '../core/wallet.service';
-import { Transaction, errorMessage, money, movementLabel, when } from '../core/models';
+import { Transaction, errorMessage, isOutgoing, money, movementLabel, pocketLabel, when } from '../core/models';
 
 @Component({
   selector: 'app-transactions',
@@ -26,12 +26,12 @@ import { Transaction, errorMessage, money, movementLabel, when } from '../core/m
           <tbody>
             @for (item of items()!; track item.id) {
               <tr>
-                <td>{{ movementLabel(item.type) }}</td>
+                <td>{{ movementLabel(item.type) }} · {{ pocketLabel(item.pocket) }}</td>
                 <td>
                   <div>{{ detail(item) }}</div>
                   <span class="muted">{{ when(item.createdAt) }}</span>
                 </td>
-                <td [class.out]="item.type === 'TransferOut'">{{ signed(item) }}</td>
+                <td [class.out]="isOutgoing(item.type, item.pocket)">{{ signed(item) }}</td>
                 <td>{{ money(item.balanceAfter) }}</td>
               </tr>
             }
@@ -57,6 +57,8 @@ export class TransactionsPage {
   protected readonly money = money;
   protected readonly when = when;
   protected readonly movementLabel = movementLabel;
+  protected readonly pocketLabel = pocketLabel;
+  protected readonly isOutgoing = isOutgoing;
 
   constructor() {
     this.load(1);
@@ -67,7 +69,7 @@ export class TransactionsPage {
   }
 
   protected signed(item: Transaction): string {
-    const prefix = item.type === 'TransferOut' ? '−' : '+';
+    const prefix = isOutgoing(item.type, item.pocket) ? '−' : '+';
     return `${prefix}${money(item.amount)}`;
   }
 

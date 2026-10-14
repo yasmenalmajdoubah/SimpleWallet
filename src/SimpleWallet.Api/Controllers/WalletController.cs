@@ -18,12 +18,12 @@ public class WalletController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<WalletBalanceResponse>> Get(CancellationToken cancellationToken)
+    public async Task<ActionResult<WalletHomeResponse>> Get(CancellationToken cancellationToken)
     {
-        var balance = await _wallets.GetBalanceAsync(CurrentUserId(), cancellationToken);
-        return balance is null
+        var home = await _wallets.GetHomeAsync(CurrentUserId(), cancellationToken);
+        return home is null
             ? NotFound(new { message = "المحفظة غير موجودة." })
-            : Ok(balance);
+            : Ok(home);
     }
 
     [HttpGet("transactions")]
@@ -33,6 +33,15 @@ public class WalletController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         return Ok(await _wallets.GetTransactionsAsync(CurrentUserId(), page, pageSize, cancellationToken));
+    }
+
+    [HttpGet("bills")]
+    public ActionResult<IReadOnlyList<BillResponse>> Bills() => Ok(_wallets.Bills());
+
+    [HttpGet("requests")]
+    public async Task<ActionResult<IReadOnlyList<MoneyRequestResponse>>> Requests(CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.GetRequestsAsync(CurrentUserId(), cancellationToken));
     }
 
     [HttpPost("deposit")]
@@ -45,6 +54,69 @@ public class WalletController : ControllerBase
     public async Task<ActionResult<MoneyMovementResponse>> Transfer(TransferRequest request, CancellationToken cancellationToken)
     {
         return Ok(await _wallets.TransferAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPut("salary")]
+    public async Task<ActionResult<SalaryStateResponse>> SetSalary(SalaryRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.SetSalaryAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPost("salary/collect")]
+    public async Task<ActionResult<MoneyMovementResponse>> CollectSalary(CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.CollectSalaryAsync(CurrentUserId(), cancellationToken));
+    }
+
+    [HttpPost("move")]
+    public async Task<ActionResult<MoneyMovementResponse>> Move(MoveMoneyRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.MoveAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPost("card/freeze")]
+    public async Task<ActionResult<CardResponse>> Freeze(FreezeCardRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.SetCardFrozenAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPost("card/pay")]
+    public async Task<ActionResult<MoneyMovementResponse>> PayWithCard(CardPaymentRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.PayWithCardAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPost("bills/pay")]
+    public async Task<ActionResult<MoneyMovementResponse>> PayBill(PayBillRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.PayBillAsync(CurrentUserId(), request, cancellationToken));
+    }
+
+    [HttpPost("requests")]
+    public async Task<IActionResult> CreateRequest(CreateMoneyRequest request, CancellationToken cancellationToken)
+    {
+        await _wallets.CreateRequestAsync(CurrentUserId(), request, cancellationToken);
+        return Ok(new { message = "انبعت الطلب." });
+    }
+
+    [HttpPost("requests/{id:guid}/accept")]
+    public async Task<ActionResult<MoneyMovementResponse>> Accept(Guid id, CancellationToken cancellationToken)
+    {
+        return Ok(await _wallets.AcceptRequestAsync(CurrentUserId(), id, cancellationToken));
+    }
+
+    [HttpPost("requests/{id:guid}/reject")]
+    public async Task<IActionResult> Reject(Guid id, CancellationToken cancellationToken)
+    {
+        await _wallets.RejectRequestAsync(CurrentUserId(), id, cancellationToken);
+        return Ok(new { message = "انرفض الطلب." });
+    }
+
+    [HttpPost("requests/{id:guid}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        await _wallets.CancelRequestAsync(CurrentUserId(), id, cancellationToken);
+        return Ok(new { message = "انلغى الطلب." });
     }
 
     private Guid CurrentUserId()
